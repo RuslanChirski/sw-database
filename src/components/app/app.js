@@ -1,23 +1,30 @@
 import React, { Component } from 'react';
-import SwapiService from '../../services/swapi-service';
 import Header from '../header';
 import RandomPlanet from '../random-planet';
-import PersonPage from '../person-page';
-import ItemList from '../item-list';
-import ItemDetails from '../item-details';
 import ErrorBoundry from '../error-boundry';
-import Row from '../row';
-import Record from '../record';
-
+import { SwapiServiceProvider } from '../swapi-service-context';
+import SwapiService from '../../services/swapi-service';
+import DummySwapiService from '../../services/dummy-swapi-service';
+import { MainPage, PeoplePage, PlanetsPage, StarshipsPage, LoginPage, SecretPage } from '../pages';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import './app.css';
+import { PersonDetails, StarshipDetails } from '../sw-components';
 
 export default class App extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       showRandomPlanet: false,
+      apiService: new SwapiService(),
+      isLogged: false,
     };
-    this.swapiService = new SwapiService();
+    this.toggleIsLogged = () => {
+      this.setState(({ isLogged }) => {
+        return {
+          isLogged: !isLogged,
+        };
+      });
+    };
     this.toggleRandomPlanet = () => {
       this.setState(({ showRandomPlanet }) => {
         return {
@@ -25,68 +32,63 @@ export default class App extends Component {
         };
       });
     };
+
+    this.onChangeService = () => {
+      this.setState(({ apiService }) => {
+        const Service = apiService instanceof SwapiService ? DummySwapiService : SwapiService;
+        console.log(`new service is ${Service.name}`);
+        return {
+          apiService: new Service(),
+        };
+      });
+    };
   }
 
   render() {
-    const { showRandomPlanet } = this.state;
-    const { getStarship, getPlanet, getPlanetImgUrl, getStarshipImgUrl } = this.swapiService;
-    const planet = showRandomPlanet ? <RandomPlanet /> : null;
-
-    const planetItemList = (
-      <ItemList onSelectItem={this.changeSelectedPerson} getData={this.swapiService.getAllPlanets}>
-        {(i) => (
-          <p>
-            {i.name} (population: {i.population}, diameter: {i.diameter})
-          </p>
-        )}
-      </ItemList>
-    );
-    const planetDetails = (
-      <ItemDetails currentItemId={3} getData={getPlanet} getImgUrl={getPlanetImgUrl}>
-        <Record field="diameter" label="Diameter" />
-        <Record field="population" label="Population" />
-      </ItemDetails>
-    );
-
-    const starshipItemList = (
-      <ItemList
-        onSelectItem={this.changeSelectedPerson}
-        // Добавляем в компонент функцию, которая будет получать данные с сервера, до этого внутри
-        // компонента создавался инстанс класса apiService
-        getData={this.swapiService.getAllStarships}
-      >
-        {(i) => (
-          <p>
-            {i.name} (crew: {i.crew}, passengers: {i.passengers}
-          </p>
-        )}
-      </ItemList>
-    );
-    const starshipDetails = (
-      <ItemDetails currentItemId={5} getData={getStarship} getImgUrl={getStarshipImgUrl}>
-        <Record field="model" label="Model" />
-        <Record field="costInCredits" label="Cost in credits" />
-        <Record field="passengers" label="Passengers" />
-      </ItemDetails>
-    );
+    const { showRandomPlanet, apiService, isLogged } = this.state;
+    const planet = showRandomPlanet ? <RandomPlanet updateInterval={2000} /> : null;
 
     return (
       <ErrorBoundry>
-        <div className="stardb-app">
-          <Header />
-          {planet}
-          <button
-            className="toggle-planet btn btn-warning btn-lg"
-            onClick={this.toggleRandomPlanet}
-          >
-            Toggle Random Planet
-          </button>
-          <PersonPage />
-          {/*Блок Planets*/}
-          <Row leftItem={planetItemList} rightItem={planetDetails} />
-          {/*Блок starships*/}
-          <Row leftItem={starshipItemList} rightItem={starshipDetails} />
-        </div>
+        <Router>
+          <SwapiServiceProvider value={apiService}>
+            <div className="stardb-app">
+              <Header onChangeService={this.onChangeService} />
+              {planet}
+              <button
+                className="toggle-planet btn btn-warning btn-lg"
+                onClick={this.toggleRandomPlanet}>
+                Toggle Random Planet
+              </button>
+              <Switch>
+                <Route path="/" exact component={MainPage} />
+                <Route path="/peoples" exact component={PeoplePage} />
+                <Route
+                  path={'/peoples/:id'}
+                  render={({ match }) => {
+                    const { id } = match.params;
+                    return <PersonDetails currentItemId={id} />;
+                  }}
+                />
+                <Route path="/starships/" exact component={StarshipsPage} />
+                <Route
+                  path={'/starships/:id'}
+                  render={({ match }) => {
+                    const { id } = match.params;
+                    return <StarshipDetails currentItemId={id} />;
+                  }}
+                />
+                <Route path="/planets/:id?" component={PlanetsPage} />
+                <Route path="/secret" render={() => <SecretPage isLogged={isLogged} />} />
+                <Route
+                  path="/login"
+                  render={() => <LoginPage isLogged={isLogged} login={this.toggleIsLogged} />}
+                />
+                <Route render={() => <h2>This page in not found!</h2>} />
+              </Switch>
+            </div>
+          </SwapiServiceProvider>
+        </Router>
       </ErrorBoundry>
     );
   }

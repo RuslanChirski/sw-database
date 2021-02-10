@@ -34,16 +34,17 @@
 }
 
 .loadingio-spinner-ripple-7wtnte4ik59 {
-    width: 182px;
+    width: 100%;
     height: 182px;
-    display: inline-block;
+    display: flex;
+    justify-content: center;
     overflow: hidden;
     background: #303030;
     margin: 0 auto;
 }
 .ldio-l4bv8ffes8e {
-    width: 100%;
-    height: 100%;
+    width: 182px;
+    height: 182px;
     position: relative;
     transform: translateZ(0) scale(1);
     backface-visibility: hidden;

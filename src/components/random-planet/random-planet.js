@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
 import Loader from '../loader';
 import ErrorIndicator from '../error-indicator';
@@ -7,9 +8,9 @@ import SwapiService from '../../services/swapi-service';
 import './random-planet.css';
 
 // Компонент для логики
-export default class RandomPlanet extends Component {
-  constructor() {
-    super();
+class RandomPlanet extends Component {
+  constructor(props) {
+    super(props);
     this.apiService = new SwapiService();
     this.state = {
       planet: {},
@@ -44,8 +45,9 @@ export default class RandomPlanet extends Component {
   // Получение данных с сервера
 
   componentDidMount() {
+    const { updateInterval } = this.props;
     this.updatePlanet();
-    this.interval = setInterval(this.updatePlanet, 2000);
+    this.interval = setInterval(this.updatePlanet, updateInterval);
   }
 
   componentWillUnmount() {
@@ -70,6 +72,10 @@ export default class RandomPlanet extends Component {
     );
   }
 }
+RandomPlanet.propTypes = {
+  updateInterval: PropTypes.number,
+};
+export default RandomPlanet;
 
 // Локальный для рендеринга который используется только тут
 const PlanetContent = ({ planet }) => {

@@ -1,5 +1,4 @@
 import React from 'react';
-
 import './row.css';
 
 const Row = ({ leftItem, rightItem }) => {
